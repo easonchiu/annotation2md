@@ -41,7 +41,6 @@ func main() {
 
   filenames := feather.GetFileNamesFromDir(dirname)
   keyvars := feather.GetKeyVarsFromFile(vars)
-  fmt.Println(keyvars)
   markdown := engine.Start(title, filenames, keyvars)
 
   ioutil.WriteFile(outfile+".md", []byte(markdown), os.ModePerm)
