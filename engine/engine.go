@@ -7,7 +7,7 @@ import (
   "sort"
 )
 
-func Start(title string, files []string) string {
+func Start(title string, files []string, vars map[string]string) string {
   markdown := ""
   if title != "" {
     markdown = "# " + title + "\n\n"
@@ -17,7 +17,7 @@ func Start(title string, files []string) string {
 
   if len(files) > 0 {
     for _, filename := range files {
-      docAnnotations := feather.GetDocAnnotationFormFile(filename)
+      docAnnotations := feather.GetDocAnnotationFormFile(filename, vars)
       if len(docAnnotations) == 0 {
         continue
       }

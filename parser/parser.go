@@ -2,6 +2,7 @@ package parser
 
 import (
   "fmt"
+  "log"
   "regexp"
   "strings"
 )
@@ -186,6 +187,7 @@ func ParseResultData(origin string) []*ResultData {
 func DocStruct2Markdown(data *Doc) string {
   md := ""
   if data.Title == "" || data.Router == "" {
+    log.Fatal("@Title或@Router不能为空，请检查")
     return md
   }
 
