@@ -1,9 +1,13 @@
 package feather
 
 import (
+  "bytes"
   "io/ioutil"
   "log"
+  "os"
   "regexp"
+  "strings"
+  "unicode"
 )
 
 // 根据目录找到文件名
@@ -33,20 +37,36 @@ func GetDocAnnotationFormFile(filename string, vars map[string]string) []string 
   // 找到注释文档，即：以/*:doc开头，以*/结尾的这段注释
   reg := regexp.MustCompile(`/\*:doc((\s|.)*?)\*/`)
   docAnnotationMatchs := reg.FindAllSubmatch(fileBytes, -1)
-  varsreg := regexp.MustCompile(`\${\S+}\??`)
+  varsreg := regexp.MustCompile(`\${\S+}\??(\s|.)*?\n`)
+  varskey := regexp.MustCompile(`\${\S+}\??`)
 
   // 把匹配结果中的注释都整理出来
   for _, s := range docAnnotationMatchs {
-    doc := s[1]
-    doc = varsreg.ReplaceAllFunc(doc, func(b []byte) []byte {
-      if v, ok := vars[string(b)]; ok {
-        return []byte(v)
+    doc := varsreg.ReplaceAllFunc(s[1], func(b []byte) []byte {
+      findString := varskey.FindString(string(b))
+      if v, ok := vars[findString]; ok {
+        return []byte(v + "\n")
       } else {
-        log.Fatal("找不到相关变量：", string(b))
+        log.Fatal("找不到相关变量：", findString)
         return b
       }
     })
+    replaceDoc := varsreg.ReplaceAllFunc(s[1], func(b []byte) []byte {
+      findString := varskey.FindString(string(b))
+      if v, ok := vars[findString]; ok {
+        reg := regexp.MustCompile(`^[^|]*?\|`)
+        r := reg.ReplaceAllString(v, "|")
+        return []byte(findString + " " + r + "\n")
+      }
+      return b
+    })
+    // 替换原文档
+    fileBytes = bytes.Replace(fileBytes, s[1], replaceDoc, -1)
     annotationDocs = append(annotationDocs, string(doc))
+  }
+
+  if len(annotationDocs) > 0 {
+    ioutil.WriteFile(filename, fileBytes, os.ModePerm)
   }
 
   return annotationDocs
@@ -66,7 +86,7 @@ func GetKeyVarsFromFile(filename string) map[string]string {
   regResult := reg.FindAllStringSubmatch(string(fileBytes), -1)
   for _, res := range regResult {
     key := res[1]
-    val := res[2]
+    val := strings.TrimRightFunc(res[2], unicode.IsSpace)
     vars["${"+key+"}"] = key + val
     vars["${"+key+"}?"] = key + "?" + val
   }

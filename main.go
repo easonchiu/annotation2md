@@ -4,7 +4,6 @@ import (
   "annotation2md/engine"
   "annotation2md/feather"
   "flag"
-  "fmt"
   "io/ioutil"
   "os"
 )
