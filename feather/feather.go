@@ -2,7 +2,6 @@ package feather
 
 import (
   "bytes"
-  "fmt"
   "io/ioutil"
   "log"
   "os"
@@ -52,7 +51,6 @@ func GetDocAnnotationFormFile(filename string, vars map[string]string) []string 
         findString = reg.ReplaceAllString(findAsString, "}")
       }
       if v, ok := vars[findString]; ok {
-        fmt.Println("---")
         if findAsString != "" {
           reg = regexp.MustCompile(`^[^\W?]+`)
           asreg := regexp.MustCompile(`as\W+(\S+)}`)
