@@ -23,7 +23,7 @@ import (
 */
 
 func main() {
-  // 参数： --dir=目录 --title=文档标题 --outfile=abc --vars=声明变量的文档
+  // 参数： --dir=目录 --title=文档标题 --outfile=导出的文件名 --vars=声明变量的文档
   dirname := ""
   flag.StringVar(&dirname, "dir", "", "解析目录")
   title := ""
@@ -36,7 +36,8 @@ func main() {
 
   // dirname = "test"
   // title = "title"
-  // vars = "vars"
+  // vars = "test/.docvars"
+  // outfile = "test/doc"
 
   filenames := feather.GetFileNamesFromDir(dirname)
   keyvars := feather.GetKeyVarsFromFile(vars)

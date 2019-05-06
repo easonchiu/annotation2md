@@ -5,4 +5,4 @@ $checkStatus | int | 审核状态 1:未审核 2:审核通过 9: 审核未通过
 $followUpStatus | int | 跟进状态 1:无需求 2:有需求 3:已预约 4:已签约 9:未接通
 $cityCode | string | 城市code
 $cityName | string | 城市名
-$remark | string | 备注
+$remark | string | 备注222

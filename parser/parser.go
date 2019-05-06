@@ -148,6 +148,7 @@ func ParseRequestData(origin string) []*RequestData {
 
 // 解析
 func ParseResultData(origin string) []*ResultData {
+
   reg := regexp.MustCompile(`\n`)
   lines := reg.Split(origin, -1)
   data := make([]*ResultData, 0, len(lines))

@@ -2,6 +2,7 @@ package feather
 
 import (
   "bytes"
+  "fmt"
   "io/ioutil"
   "log"
   "os"
@@ -37,14 +38,27 @@ func GetDocAnnotationFormFile(filename string, vars map[string]string) []string 
   // 找到注释文档，即：以/*:doc开头，以*/结尾的这段注释
   reg := regexp.MustCompile(`/\*:doc((\s|.)*?)\*/`)
   docAnnotationMatchs := reg.FindAllSubmatch(fileBytes, -1)
-  varsreg := regexp.MustCompile(`\${\S+}\??(\s|.)*?\n`)
+  varsreg := regexp.MustCompile(`\${\S+(\W+as\W+\S+)?}\??(\s|.)*?\n`)
   varskey := regexp.MustCompile(`\${\S+}\??`)
+  varsaskey := regexp.MustCompile(`\${\S+\W+as\W+\S+}\??`)
 
   // 把匹配结果中的注释都整理出来
   for _, s := range docAnnotationMatchs {
     doc := varsreg.ReplaceAllFunc(s[1], func(b []byte) []byte {
       findString := varskey.FindString(string(b))
+      findAsString := varsaskey.FindString(string(b))
+      if findAsString != "" {
+        reg := regexp.MustCompile(`\W+as\W+\S+}\??$`)
+        findString = reg.ReplaceAllString(findAsString, "}")
+      }
       if v, ok := vars[findString]; ok {
+        fmt.Println("---")
+        if findAsString != "" {
+          reg = regexp.MustCompile(`^[^\W?]+`)
+          asreg := regexp.MustCompile(`as\W+(\S+)}`)
+          res := asreg.FindAllStringSubmatch(findAsString, 1)
+          v = reg.ReplaceAllString(v, res[0][1])
+        }
         return []byte(v + "\n")
       } else {
         log.Fatal("找不到相关变量：", findString)
@@ -53,9 +67,17 @@ func GetDocAnnotationFormFile(filename string, vars map[string]string) []string 
     })
     replaceDoc := varsreg.ReplaceAllFunc(s[1], func(b []byte) []byte {
       findString := varskey.FindString(string(b))
+      findAsString := varsaskey.FindString(string(b))
+      if findAsString != "" {
+        reg := regexp.MustCompile(`\W+as\W+\S+}\??$`)
+        findString = reg.ReplaceAllString(findAsString, "}")
+      }
       if v, ok := vars[findString]; ok {
         reg := regexp.MustCompile(`^[^|]*?\|`)
         r := reg.ReplaceAllString(v, "|")
+        if findAsString != "" {
+          return []byte(findAsString + " " + r + "\n")
+        }
         return []byte(findString + " " + r + "\n")
       }
       return b
