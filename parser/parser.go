@@ -20,6 +20,7 @@ type RequestData struct {
 type ResultData struct {
   Name        string
   Type        string
+  Required    bool
   Description string
 }
 
@@ -156,6 +157,7 @@ func ParseResultData(origin string) []*ResultData {
     var (
       name        string
       typ         string
+      required    bool
       description string
     )
 
@@ -179,7 +181,12 @@ func ParseResultData(origin string) []*ResultData {
       description = split[2]
     }
 
-    data = append(data, &ResultData{name, typ, description})
+    // 判断key是否必填
+    reg = regexp.MustCompile(`\?$`)
+    required = !reg.MatchString(name)
+    name = reg.Split(name, -1)[0]
+
+    data = append(data, &ResultData{name, typ, required, description})
   }
   return data
 }
@@ -249,4 +256,84 @@ func DocStruct2Markdown(data *Doc) string {
   }
 
   return md
+}
+
+// Doc struct解析成json格式的string
+func DocStruct2JSON(data *Doc) string {
+  json := "{"
+  if data.Title == "" || data.Router == "" {
+    log.Fatal("@Title或@Router不能为空，请检查")
+    return ""
+  }
+
+  // 标题
+  if data.Id != "" {
+    json += `"title": "` + data.Id + ". " + data.Title + `"`
+  } else {
+    json += `"title": "` + data.Title + `"`
+  }
+
+  // 描述
+  if data.Description != "" {
+    json += `,"description": "` + data.Description + `"`
+  }
+
+  // 路由和方法
+  json += `,"url": "` + data.Router + `"`
+  json += `,"method": "` + strings.ToUpper(data.Method) + `"`
+
+  // param
+  if len(data.Params) > 0 {
+    json += `,"param":[`
+    for i, p := range data.Params {
+      json += fmt.Sprintf(`{"name":"%s","type":"%s","required":%v,"default":"%s","description":"%s"}`,
+        p.Name, p.Type, p.Required, p.Default, p.Description)
+      if i < len(data.Params)-1 {
+        json += ","
+      }
+    }
+    json += `]`
+  }
+
+  // query
+  if len(data.Queries) > 0 {
+    json += `,"query":[`
+    for i, p := range data.Queries {
+      json += fmt.Sprintf(`{"name":"%s","type":"%s","required":%v,"default":"%s","description":"%s"}`,
+        p.Name, p.Type, p.Required, p.Default, p.Description)
+      if i < len(data.Queries)-1 {
+        json += ","
+      }
+    }
+    json += `]`
+  }
+
+  // raw
+  if len(data.Raws) > 0 {
+    json += `,"raw":[`
+    for i, p := range data.Raws {
+      json += fmt.Sprintf(`{"name":"%s","type":"%s","required":%v,"default":"%s","description":"%s"}`,
+        p.Name, p.Type, p.Required, p.Default, p.Description)
+      if i < len(data.Raws)-1 {
+        json += ","
+      }
+    }
+    json += `]`
+  }
+
+  // result
+  if len(data.Result) > 0 {
+    json += `,"result":[`
+    for i, p := range data.Result {
+      json += fmt.Sprintf(`{"name":"%s","type":"%s","required":%v,"description":"%s"}`,
+        p.Name, p.Type, p.Required, p.Description)
+      if i < len(data.Result)-1 {
+        json += ","
+      }
+    }
+    json += `]`
+  }
+
+  json += "}"
+  return json
 }

@@ -6,6 +6,8 @@
 2. $ go install
 3. $ annotation2md --dir=注释所在的目录 --title=文档标题 --outfile=文档名 --vars=声明变量的文档
 
+另：如果需要json格式的文档，可在第三步的参数最后加上--json，即可
+
 #### 生成文档
 
 **例：**

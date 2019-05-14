@@ -23,7 +23,7 @@ import (
 */
 
 func main() {
-  // 参数： --dir=目录 --title=文档标题 --outfile=导出的文件名 --vars=声明变量的文档
+  // 参数： --dir=目录 --title=文档标题 --outfile=导出的文件名 --vars=声明变量的文档 --json
   dirname := ""
   flag.StringVar(&dirname, "dir", "", "解析目录")
   title := ""
@@ -32,16 +32,22 @@ func main() {
   flag.StringVar(&outfile, "outfile", "doc", "导出的文件名")
   vars := ""
   flag.StringVar(&vars, "vars", "", "声明变量的文档")
+  jsonFile := false
+  flag.BoolVar(&jsonFile, "json", false, "生成json格式的文档")
   flag.Parse()
 
   // dirname = "test"
   // title = "title"
   // vars = "test/.docvars"
   // outfile = "test/doc"
+  // jsonFile = true
 
   filenames := feather.GetFileNamesFromDir(dirname)
   keyvars := feather.GetKeyVarsFromFile(vars)
-  markdown := engine.Start(title, filenames, keyvars)
+  markdown, json := engine.Start(title, filenames, keyvars)
 
   ioutil.WriteFile(outfile+".md", []byte(markdown), os.ModePerm)
+  if jsonFile {
+    ioutil.WriteFile(outfile+".api.json", []byte(json), os.ModePerm)
+  }
 }

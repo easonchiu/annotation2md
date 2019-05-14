@@ -7,10 +7,13 @@ import (
   "sort"
 )
 
-func Start(title string, files []string, vars map[string]string) string {
+func Start(title string, files []string, vars map[string]string) (string, string) {
   markdown := ""
+  json := "{"
+
   if title != "" {
     markdown = "# " + title + "\n\n"
+    json += `"title": "` + title + `"`
   }
 
   docs := make([]*parser.Doc, 0, 50)
@@ -34,7 +37,7 @@ func Start(title string, files []string, vars map[string]string) string {
       if doc.Id != "" {
         if _, ok := hasIdDocMap[doc.Id]; ok {
           log.Fatal("存在相同的Id: " + doc.Id + "，请修改后重试")
-          return ""
+          return "", ""
         }
         idList = append(idList, doc.Id)
         hasIdDocMap[doc.Id] = doc
@@ -58,13 +61,24 @@ func Start(title string, files []string, vars map[string]string) string {
     }
 
     // 处理排好序的列表
-    for _, doc := range sortDocList {
+    json += `,"docs":[`
+    for i, doc := range sortDocList {
       res := parser.DocStruct2Markdown(doc)
+      resj := parser.DocStruct2JSON(doc)
       if res != "" {
         markdown += res + "\n"
       }
+      if resj != "" {
+        json += resj
+        if i < len(sortDocList) - 1 {
+          json += ","
+        }
+      }
     }
+    json += "]"
   }
 
-  return markdown
+  json += "}"
+
+  return markdown, json
 }
