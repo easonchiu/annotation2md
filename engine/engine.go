@@ -13,7 +13,7 @@ func Start(title string, files []string, vars map[string]string) (string, string
 
   if title != "" {
     markdown = "# " + title + "\n\n"
-    json += `"title": "` + title + `"`
+    json += `"title": "` + parser.ReplaceMH(title) + `"`
   }
 
   docs := make([]*parser.Doc, 0, 50)

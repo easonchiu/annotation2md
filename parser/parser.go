@@ -258,6 +258,12 @@ func DocStruct2Markdown(data *Doc) string {
   return md
 }
 
+// 替换冒号
+func ReplaceMH(str string) string {
+  reg := regexp.MustCompile(`"`)
+  return reg.ReplaceAllString(str, `\"`)
+}
+
 // Doc struct解析成json格式的string
 func DocStruct2JSON(data *Doc) string {
   json := "{"
@@ -268,26 +274,26 @@ func DocStruct2JSON(data *Doc) string {
 
   // 标题
   if data.Id != "" {
-    json += `"title": "` + data.Id + ". " + data.Title + `"`
+    json += `"title": "` + ReplaceMH(data.Id) + ". " + ReplaceMH(data.Title) + `"`
   } else {
-    json += `"title": "` + data.Title + `"`
+    json += `"title": "` + ReplaceMH(data.Title) + `"`
   }
 
   // 描述
   if data.Description != "" {
-    json += `,"description": "` + data.Description + `"`
+    json += `,"description": "` + ReplaceMH(data.Description) + `"`
   }
 
   // 路由和方法
-  json += `,"url": "` + data.Router + `"`
-  json += `,"method": "` + strings.ToUpper(data.Method) + `"`
+  json += `,"url": "` + ReplaceMH(data.Router) + `"`
+  json += `,"method": "` + ReplaceMH(strings.ToUpper(data.Method)) + `"`
 
   // param
   if len(data.Params) > 0 {
     json += `,"param":[`
     for i, p := range data.Params {
       json += fmt.Sprintf(`{"name":"%s","type":"%s","required":%v,"default":"%s","description":"%s"}`,
-        p.Name, p.Type, p.Required, p.Default, p.Description)
+        ReplaceMH(p.Name), ReplaceMH(p.Type), p.Required, ReplaceMH(p.Default), ReplaceMH(p.Description))
       if i < len(data.Params)-1 {
         json += ","
       }
@@ -300,7 +306,7 @@ func DocStruct2JSON(data *Doc) string {
     json += `,"query":[`
     for i, p := range data.Queries {
       json += fmt.Sprintf(`{"name":"%s","type":"%s","required":%v,"default":"%s","description":"%s"}`,
-        p.Name, p.Type, p.Required, p.Default, p.Description)
+        ReplaceMH(p.Name), ReplaceMH(p.Type), p.Required, ReplaceMH(p.Default), ReplaceMH(p.Description))
       if i < len(data.Queries)-1 {
         json += ","
       }
@@ -313,7 +319,7 @@ func DocStruct2JSON(data *Doc) string {
     json += `,"raw":[`
     for i, p := range data.Raws {
       json += fmt.Sprintf(`{"name":"%s","type":"%s","required":%v,"default":"%s","description":"%s"}`,
-        p.Name, p.Type, p.Required, p.Default, p.Description)
+        ReplaceMH(p.Name), ReplaceMH(p.Type), p.Required, ReplaceMH(p.Default), ReplaceMH(p.Description))
       if i < len(data.Raws)-1 {
         json += ","
       }
@@ -326,7 +332,7 @@ func DocStruct2JSON(data *Doc) string {
     json += `,"result":[`
     for i, p := range data.Result {
       json += fmt.Sprintf(`{"name":"%s","type":"%s","required":%v,"description":"%s"}`,
-        p.Name, p.Type, p.Required, p.Description)
+        ReplaceMH(p.Name), ReplaceMH(p.Type), p.Required, ReplaceMH(p.Description))
       if i < len(data.Result)-1 {
         json += ","
       }
