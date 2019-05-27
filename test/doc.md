@@ -13,7 +13,7 @@
 |a|int|true||test|
 |b|int|true||test|
 
-**Raw**
+**Body**
 
 |Name|Type|Required|Default|Description|
 |-|-|-|-|-|
@@ -34,6 +34,12 @@
 |-|-|
 |/list|GET|
 
+**Headers**
+
+|Key|Value|Description|
+|-|-|-|
+|Content-Type|string|contenttype|
+
 **Query**
 
 |Name|Type|Required|Default|Description|
@@ -41,7 +47,7 @@
 |a|int|true||test|
 |b|int|true||test|
 
-**Raw**
+**Body**
 
 |Name|Type|Required|Default|Description|
 |-|-|-|-|-|

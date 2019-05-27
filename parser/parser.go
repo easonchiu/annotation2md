@@ -7,6 +7,13 @@ import (
   "strings"
 )
 
+// 头的结构体
+type HeadersData struct {
+  Key         string
+  Value       string
+  Description string
+}
+
 // 传参条目的结构体
 type RequestData struct {
   Name        string
@@ -31,9 +38,10 @@ type Doc struct {
   Description string
   Method      string
   Router      string
+  Headers     []*HeadersData // 头
   Params      []*RequestData // url中的参数
-  Queries     []*RequestData // ?后面的参数
-  Raws        []*RequestData // body中的raw参数
+  Query       []*RequestData // ?后面的参数
+  Body        []*RequestData // body
   Result      []*ResultData  // 返回的数据
 }
 
@@ -45,9 +53,10 @@ func Annotation2DocStruct(annotation string) *Doc {
     Description: "",
     Method:      "get",
     Router:      "",
+    Headers:     make([]*HeadersData, 0, 10),
     Params:      make([]*RequestData, 0, 10),
-    Queries:     make([]*RequestData, 0, 10),
-    Raws:        make([]*RequestData, 0, 10),
+    Query:       make([]*RequestData, 0, 10),
+    Body:        make([]*RequestData, 0, 10),
     Result:      make([]*ResultData, 0, 10),
   }
 
@@ -71,18 +80,66 @@ func Annotation2DocStruct(annotation string) *Doc {
       doc.Method = value
     case "Router":
       doc.Router = value
-    case "Param":
+    case "Headers":
+      doc.Headers = append(doc.Headers, ParseHeadersData(value)...)
+    case "Params":
       doc.Params = append(doc.Params, ParseRequestData(value)...)
     case "Query":
-      doc.Queries = append(doc.Queries, ParseRequestData(value)...)
-    case "Raw":
-      doc.Raws = append(doc.Raws, ParseRequestData(value)...)
+      doc.Query = append(doc.Query, ParseRequestData(value)...)
+    case "Body":
+      doc.Body = append(doc.Body, ParseRequestData(value)...)
     case "Result":
       doc.Result = append(doc.Result, ParseResultData(value)...)
     }
   }
 
   return &doc
+}
+
+// 解析HeadersData
+func ParseHeadersData(origin string) []*HeadersData {
+  reg := regexp.MustCompile(`\n`)
+  lines := reg.Split(origin, -1)
+  data := make([]*HeadersData, 0, len(lines))
+
+  for _, line := range lines {
+    var (
+      key         string
+      value       string
+      description string
+    )
+
+    reg := regexp.MustCompile(`\|`)
+    split := reg.Split(line, -1)
+
+    if len(split) == 0 {
+      return nil
+    }
+
+    // 去空格
+    for i, s := range split {
+      split[i] = strings.TrimSpace(s)
+    }
+
+    switch len(split) {
+    case 3: // key value description
+      key = split[0]
+      value = split[1]
+      description = split[2]
+    case 2: // key value
+      key = split[0]
+      value = split[1]
+    default:
+      return nil
+    }
+
+    data = append(data, &HeadersData{
+      Key:         key,
+      Value:       value,
+      Description: description,
+    })
+  }
+  return data
 }
 
 // 解析RequestData
@@ -147,9 +204,8 @@ func ParseRequestData(origin string) []*RequestData {
   return data
 }
 
-// 解析
+// 解析result
 func ParseResultData(origin string) []*ResultData {
-
   reg := regexp.MustCompile(`\n`)
   lines := reg.Split(origin, -1)
   data := make([]*ResultData, 0, len(lines))
@@ -215,9 +271,19 @@ func DocStruct2Markdown(data *Doc) string {
   md += "\n|URL|Method|\n|-|-|\n"
   md += "|" + data.Router + "|" + strings.ToUpper(data.Method) + "|\n"
 
-  // param
+  // headers
+  if len(data.Headers) > 0 {
+    md += "\n**Headers**\n\n"
+    md += "|Key|Value|Description|\n|-|-|-|\n"
+    for _, p := range data.Headers {
+      md += fmt.Sprintf("|%s|%s|%v|\n",
+        p.Key, p.Value, p.Description)
+    }
+  }
+
+  // params
   if len(data.Params) > 0 {
-    md += "\n**Param**\n\n"
+    md += "\n**Params**\n\n"
     md += "|Name|Type|Required|Default|Description|\n|-|-|-|-|-|\n"
     for _, p := range data.Params {
       md += fmt.Sprintf("|%s|%s|%v|%s|%s|\n",
@@ -226,20 +292,20 @@ func DocStruct2Markdown(data *Doc) string {
   }
 
   // query
-  if len(data.Queries) > 0 {
+  if len(data.Query) > 0 {
     md += "\n**Query**\n\n"
     md += "|Name|Type|Required|Default|Description|\n|-|-|-|-|-|\n"
-    for _, p := range data.Queries {
+    for _, p := range data.Query {
       md += fmt.Sprintf("|%s|%s|%v|%s|%s|\n",
         p.Name, p.Type, p.Required, p.Default, p.Description)
     }
   }
 
-  // raw
-  if len(data.Raws) > 0 {
-    md += "\n**Raw**\n\n"
+  // body
+  if len(data.Body) > 0 {
+    md += "\n**Body**\n\n"
     md += "|Name|Type|Required|Default|Description|\n|-|-|-|-|-|\n"
-    for _, p := range data.Raws {
+    for _, p := range data.Body {
       md += fmt.Sprintf("|%s|%s|%v|%s|%s|\n",
         p.Name, p.Type, p.Required, p.Default, p.Description)
     }
@@ -288,9 +354,22 @@ func DocStruct2JSON(data *Doc) string {
   json += `,"url": "` + ReplaceMH(data.Router) + `"`
   json += `,"method": "` + ReplaceMH(strings.ToUpper(data.Method)) + `"`
 
-  // param
+  // headers
+  if len(data.Headers) > 0 {
+    json += `,"headers":[`
+    for i, p := range data.Headers {
+      json += fmt.Sprintf(`{"key":"%s","value":"%s","description":"%s"}`,
+        ReplaceMH(p.Key), ReplaceMH(p.Value), ReplaceMH(p.Description))
+      if i < len(data.Headers)-1 {
+        json += ","
+      }
+    }
+    json += `]`
+  }
+
+  // params
   if len(data.Params) > 0 {
-    json += `,"param":[`
+    json += `,"params":[`
     for i, p := range data.Params {
       json += fmt.Sprintf(`{"name":"%s","type":"%s","required":%v,"default":"%s","description":"%s"}`,
         ReplaceMH(p.Name), ReplaceMH(p.Type), p.Required, ReplaceMH(p.Default), ReplaceMH(p.Description))
@@ -302,25 +381,25 @@ func DocStruct2JSON(data *Doc) string {
   }
 
   // query
-  if len(data.Queries) > 0 {
+  if len(data.Query) > 0 {
     json += `,"query":[`
-    for i, p := range data.Queries {
+    for i, p := range data.Query {
       json += fmt.Sprintf(`{"name":"%s","type":"%s","required":%v,"default":"%s","description":"%s"}`,
         ReplaceMH(p.Name), ReplaceMH(p.Type), p.Required, ReplaceMH(p.Default), ReplaceMH(p.Description))
-      if i < len(data.Queries)-1 {
+      if i < len(data.Query)-1 {
         json += ","
       }
     }
     json += `]`
   }
 
-  // raw
-  if len(data.Raws) > 0 {
-    json += `,"raw":[`
-    for i, p := range data.Raws {
+  // body
+  if len(data.Body) > 0 {
+    json += `,"body":[`
+    for i, p := range data.Body {
       json += fmt.Sprintf(`{"name":"%s","type":"%s","required":%v,"default":"%s","description":"%s"}`,
         ReplaceMH(p.Name), ReplaceMH(p.Type), p.Required, ReplaceMH(p.Default), ReplaceMH(p.Description))
-      if i < len(data.Raws)-1 {
+      if i < len(data.Body)-1 {
         json += ","
       }
     }

@@ -46,8 +46,8 @@ func main() {
   keyvars := feather.GetKeyVarsFromFile(vars)
   markdown, json := engine.Start(title, filenames, keyvars)
 
-  ioutil.WriteFile(outfile+".md", []byte(markdown), os.ModePerm)
+  _= ioutil.WriteFile(outfile+".md", []byte(markdown), os.ModePerm)
   if jsonFile {
-    ioutil.WriteFile(outfile+".api.json", []byte(json), os.ModePerm)
+    _= ioutil.WriteFile(outfile+".api.json", []byte(json), os.ModePerm)
   }
 }

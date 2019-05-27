@@ -6,7 +6,7 @@ package main
 @Title 一个标题2
 @Method get
 @Router /list
-@Raw
+@Body
 ${skip as abddd} | int | 跳过
 @Query
 a | int | test
@@ -24,7 +24,9 @@ func main(){}
 @Title 一个标题2
 @Method get
 @Router /list
-@Raw
+@Headers
+Content-Type | string | contenttype
+@Body
 ${skip as abddd} | int | 跳过
 @Query
 a | int | test

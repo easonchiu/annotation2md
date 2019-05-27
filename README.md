@@ -18,10 +18,13 @@
 @Title 查找一个列表
 @Method get
 @Router /users/{which}/list
+@Headers
+Content-Type | application/json
+Authorization | xxxxxx | JWT
 @Query
 skip? | int | 10 | skip
 limit? | int | 10 | limit
-@Param
+@Params
 which | string | 随便一个什么参数
 @Result
 foo | string | foo
@@ -37,7 +40,14 @@ bar | int | bar
 |-|-|
 |/users/{which}/list|GET|
 
-**Param**
+**Headers**
+
+|Key|Value|Description|
+|-|-|-|
+|Content-Type|application/json||
+|Authorization|xxxxxx|JWT|
+
+**Params**
 
 |Name|Type|Required|Default|Description|
 |-|-|-|-|-|
@@ -63,9 +73,10 @@ bar | int | bar
 - **@Title** 文档标题，必须
 - **@Method** 接口的请求方式，必须
 - **@Router** 接口地址，必须
-- **@Param** 接口地址中的参数
+- **@Headers** 头信息
+- **@Params** 接口地址中的参数
 - **@Query** 接口地址中的?后面参数
-- **@Raw** body中的参数
+- **@Body** body中的参数
 - **@Result** 返回数据
 
 参数可以在@后方用空格隔开写，也可以换行写，但是每个参数都是必须换行的
@@ -107,7 +118,6 @@ $count | int | 条目总数
 @Query
 ${skip}?
 ${limit}?
-@Param
 ...
 */
 ```
@@ -123,7 +133,6 @@ $someThingStatus | int | 1. 状态A 2. 状态B 3. 状态C
 ...
 @Query
 ${someThingStatus as status}?
-@Param
 ...
 */
 ```
